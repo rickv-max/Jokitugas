@@ -689,24 +689,41 @@ const OrderCalculator = () => {
 
     toast(`Pesanan Dibuat! ID: ${orderId}`, "success");
 
+    // PERBAIKAN DI SINI:
+    // 1. Pastikan nomor WA admin bersih dari karakter non-angka
+    const cleanWaNumber = (settings.waNumber || WA_NUMBER).replace(/[^0-9]/g, "");
+    
+    // 2. Susun pesan dengan template literal yang bersih
+    const text = `Halo Admin JokiHub! 👋\n\nSaya ingin memesan layanan:\n*ID Pesanan:* ${orderId}\n*Layanan:* ${finalServiceName}\n*Nama:* ${clientName}\n*Urgensi:* ${urgency.toUpperCase()}\n*Total Tagihan:* ${formatRupiah(price)}\n\n*Catatan:*\n${notes || "-"}\n\nMohon instruksi pembayarannya. Terima kasih!`;
+    
+    const encodedText = encodeURIComponent(text);
+    const waUrl = `https://wa.me/${cleanWaNumber}?text=${encodedText}`;
+
+    // 3. Eksekusi pengalihan (PENTING UNTUK MOBILE)
+    // Gunakan durasi sedikit lebih cepat agar tidak dianggap 'pop-up' oleh browser
     setTimeout(() => {
       if (settings.paymentMethod === "pakkasir") {
         const slug = "joki-tugas";
         const apiKey = "CfgUuwb3visuOFeLtWOYGFfgJX2BcDJb";
         const pakkasirUrl = `https://pakkasir.com/pay/${slug}?apikey=${apiKey}&amount=${price}&order_id=${orderId}&customer_wa=${newOrder.wa}`;
-        window.open(pakkasirUrl, "_blank");
+        window.location.href = pakkasirUrl; // Pakai location.href lebih aman di HP
       } else {
-        // FALLBACK: Kirim Invoice Langsung ke WhatsApp Admin
-        const waNumber = settings.waNumber || WA_NUMBER;
-        const text = `Halo Admin JokiHub! 👋\n\nSaya ingin memesan layanan:\n*ID Pesanan:* ${orderId}\n*Layanan:* ${finalServiceName}\n*Nama:* ${clientName}\n*Urgensi:* ${urgency.toUpperCase()}\n*Total Tagihan:* ${formatRupiah(price)}\n\n*Catatan:*\n${notes || "-"}\n\nMohon instruksi pembayarannya. Terima kasih!`;
-        const encodedText = encodeURIComponent(text);
-        window.open(`https://wa.me/${waNumber}?text=${encodedText}`, "_blank");
+        // Redirect langsung ke WhatsApp
+        // Deteksi jika mobile, gunakan window.location.href, jika desktop boleh window.open
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+          window.location.href = waUrl;
+        } else {
+          window.open(waUrl, "_blank");
+        }
       }
 
+      // Reset form
       setClientName("");
       setClientWa("");
       setNotes("");
-    }, 1500);
+    }, 800); // Dipersingkat dari 1500ms ke 800ms
   };
 
   return (
