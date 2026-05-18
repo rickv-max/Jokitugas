@@ -4,7 +4,7 @@ import {
   LogOut, Send, AlertCircle, Loader2, Menu, X, 
   Calculator, BookOpen, GraduationCap, Copy, FileText, 
   ArrowRight, ShieldCheck, Clock, CheckCircle2, ChevronRight,
-  TrendingUp, Users, DollarSign, Activity, Zap
+  TrendingUp, Users, DollarSign, Activity, Zap, QrCode, Smartphone
 } from 'lucide-react';
 
 /* ==========================================================================
@@ -90,7 +90,8 @@ const updateOrderStatus = (id, status) => {
 // --- PENGATURAN GLOBAL ---
 const getSettings = () => {
   const saved = localStorage.getItem('jokihub_settings');
-  return saved ? JSON.parse(saved) : { waNumber: "6285856618965", acceptingOrders: true, paymentMethod: 'whatsapp' };
+  // NOTE: Ubah default paymentMethod ke 'gateway' agar otomatis pakai Bayar.GG
+  return saved ? JSON.parse(saved) : { waNumber: "6285856618965", acceptingOrders: true, paymentMethod: 'gateway' };
 };
 
 const saveSettings = (newSettings) => {
@@ -270,7 +271,7 @@ const NeoButton = ({ children, onClick, className = "", color = "bg-[#FFDF00]", 
     <span className="absolute inset-0 bg-[#A6FAFF] translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out z-0" />
     <span className="absolute inset-0 bg-[#FF90E8] translate-y-full group-hover:-translate-y-full transition-transform duration-500 ease-in-out delay-75 z-0" />
     
-    <span className="relative z-10 flex items-center gap-2">
+    <span className="relative z-10 flex items-center justify-center gap-2 w-full">
       {children}
       {Icon && <Icon className="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:translate-x-1 group-hover:rotate-12 group-hover:text-[#FFDF00]" />}
     </span>
@@ -426,7 +427,109 @@ const ToastProvider = ({ children }) => {
 const useToast = () => React.useContext(ToastContext);
 
 /* ==========================================================================
-   📱 CLIENT VIEWS & ORDER CALCULATOR
+   💳 NEO-BRUTALISM PAYMENT SCREEN (Terhubung Bayar.GG)
+   ========================================================================== */
+
+const NeoPaymentScreen = ({ data, onClose }) => {
+  const [timeLeft, setTimeLeft] = useState(0);
+  const toast = useToast();
+
+  useEffect(() => {
+    if (!data?.expires_at) return;
+
+    const updateTimer = () => {
+      const expiry = new Date(data.expires_at.replace(' ', 'T')).getTime(); 
+      const now = new Date().getTime();
+      const diff = Math.floor((expiry - now) / 1000);
+      setTimeLeft(diff <= 0 ? 0 : diff);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [data?.expires_at]);
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    toast('Berhasil Disalin! WAJIB TRANSFER SESUAI NOMINAL INI.', 'success');
+  };
+
+  const formatTime = (secs) => {
+    if (secs <= 0) return "EXPIRED";
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  if (!data) return null;
+
+  return (
+    <div className="space-y-4 md:space-y-6 animate-[slideIn_0.4s_ease-out]">
+      <div className={`p-4 md:p-6 border-4 border-black flex items-center justify-between shadow-[4px_4px_0_0_rgba(0,0,0,1)] ${timeLeft <= 0 ? 'bg-[#FF90E8]' : 'bg-[#A6FAFF]'}`}>
+        <div>
+          <h2 className="font-black text-xl md:text-2xl uppercase">STATUS: {timeLeft <= 0 ? 'KADALUARSA' : 'MENUNGGU'}</h2>
+          <p className="font-bold text-sm">Invoice: {data.invoice_id}</p>
+        </div>
+        <div className="flex flex-col items-end">
+          <Clock className="w-6 h-6 mb-1" />
+          <span className="font-black text-xl md:text-2xl">{formatTime(timeLeft)}</span>
+        </div>
+      </div>
+
+      <NeoCard color="bg-white">
+        <div className="text-center mb-6 border-b-4 border-black pb-6">
+          <p className="font-black uppercase text-sm mb-2 text-gray-500 tracking-wider">Total Tagihan Pembayaran</p>
+          <div className="bg-[#FFDF00] border-4 border-black p-4 inline-block transform -rotate-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)] cursor-pointer hover:rotate-0 transition-transform" onClick={() => copyToClipboard(data.final_amount?.toString())}>
+            <div className="flex items-center justify-center gap-3">
+              <h1 className="text-3xl md:text-5xl font-black">{formatRupiah(data.final_amount || 0)}</h1>
+              <Copy className="w-6 h-6 hover:text-white" />
+            </div>
+            <p className="font-bold text-xs mt-2 uppercase">*Sudah termasuk kode unik</p>
+          </div>
+        </div>
+
+        {data.qris_dynamic_image_url && timeLeft > 0 && (
+          <div className="flex flex-col items-center mb-6">
+            <div className="bg-white p-2 border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] mb-4">
+              <img 
+                src={data.qris_dynamic_image_url} 
+                alt="QRIS" 
+                className="w-48 h-48 md:w-56 md:h-56 object-contain"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.outerHTML = `<div class="w-48 h-48 md:w-56 md:h-56 flex flex-col items-center justify-center bg-gray-100 font-black text-center p-4 border-4 border-dashed border-black">GAGAL MEMUAT QRIS.<br/>GUNAKAN LINK BAYAR.</div>`;
+                }}
+              />
+            </div>
+            <NeoBadge color="bg-[#90EE90]" className="text-sm px-4">SCAN MENGGUNAKAN SEMUA E-WALLET</NeoBadge>
+          </div>
+        )}
+
+        {data.payment_url && timeLeft > 0 && (
+          <div className="mb-6">
+            <a href={data.payment_url} target="_blank" rel="noopener noreferrer" className="block w-full">
+              <NeoButton color="bg-[#3b82f6]" className="w-full text-white" icon={ArrowRight}>
+                BUKA LINK PEMBAYARAN
+              </NeoButton>
+            </a>
+          </div>
+        )}
+
+        <div className="bg-[#f4f4f0] border-4 border-black p-4 font-bold text-sm mb-6 flex gap-3 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+          <AlertCircle className="shrink-0 text-[#FF90E8]" />
+          <p>Setelah melakukan pembayaran, sistem akan memverifikasi otomatis. Status pesanan Anda akan berubah di bagian <span className="underline">Lacak Pesanan</span>.</p>
+        </div>
+
+        <NeoButton onClick={onClose} color="bg-black" className="w-full text-white" icon={Check}>
+          SAYA SUDAH BAYAR / TUTUP
+        </NeoButton>
+      </NeoCard>
+    </div>
+  );
+};
+
+/* ==========================================================================
+   📱 CLIENT VIEWS & ORDER CALCULATOR (INTEGRASI GATEWAY)
    ========================================================================== */
 
 const OrderCalculator = () => {
@@ -438,6 +541,12 @@ const OrderCalculator = () => {
   const [clientWa, setClientWa] = useState('');
   const [currentPlagiasi, setCurrentPlagiasi] = useState('');
   const [targetPlagiasi, setTargetPlagiasi] = useState('');
+  
+  // STATE GATEWAY
+  const [gatewayMethod, setGatewayMethod] = useState('gopay_qris');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentResult, setPaymentResult] = useState(null);
+
   const toast = useToast();
   const calcRef = useRef(null);
   const settings = getSettings(); 
@@ -457,7 +566,7 @@ const OrderCalculator = () => {
     return total * urgencyMultiplier[urgency];
   };
 
-  const handleOrder = () => {
+  const handleOrder = async () => {
     if (!settings.acceptingOrders) return toast('Mohon maaf, JokiHub sedang tutup sementara/penuh!', 'error');
     if (!service) return toast('Pilih layanan terlebih dahulu!', 'error');
     if (!clientName || !clientWa) return toast('Nama dan No. WhatsApp wajib diisi!', 'error');
@@ -473,41 +582,73 @@ const OrderCalculator = () => {
     const finalServiceName = baseServiceName + serviceDetail;
 
     const orderId = 'ORD-' + Math.floor(1000 + Math.random() * 9000);
+    const cleanWa = clientWa.replace(/[^0-9]/g, '');
     
     const newOrder = {
       id: orderId,
       client: clientName,
-      wa: clientWa, // Simpan mentah, helper formatWaLink akan mengurusnya nanti
+      wa: clientWa, 
       service: finalServiceName,
       amount: price,
       status: 'pending',
       date: new Date().toISOString().split('T')[0],
       notes: notes
     };
-    saveOrder(newOrder);
-    
-    toast(`Pesanan Dibuat! ID: ${orderId}`, 'success');
-    
-    setTimeout(() => {
-      if (settings.paymentMethod === 'pakkasir') {
-        const slug = "joki-tugas";
-        const apiKey = "CfgUuwb3visuOFeLtWOYGFfgJX2BcDJb";
-        // Pakkasir URL tidak perlu API WA, hanya butuh nomor steril
-        const cleanWa = newOrder.wa.replace(/[^0-9]/g, '');
-        const pakkasirUrl = `https://pakkasir.com/pay/${slug}?apikey=${apiKey}&amount=${price}&order_id=${orderId}&customer_wa=${cleanWa}`;
-        window.open(pakkasirUrl, '_blank'); 
-      } else {
-        // FALLBACK: Menggunakan helper formatWaLink yang anti-error
+
+    // ALUR PEMBAYARAN BARU (GATEWAY BAYAR.GG)
+    if (settings.paymentMethod === 'gateway') {
+      setIsProcessing(true);
+      try {
+        const response = await fetch('/api/create-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            amount: price,
+            description: `${finalServiceName} - ${orderId}`,
+            customer_name: clientName,
+            customer_phone: cleanWa,
+            payment_method: gatewayMethod
+          })
+        });
+
+        if (!response.ok) {
+          let errData = {};
+          try { errData = await response.json(); } catch(e){}
+          throw new Error(errData.error || errData.message || "Gagal menghubungi server pembayaran");
+        }
+
+        const resData = await response.json();
+        if (!resData.success) throw new Error(resData.message || "Transaksi ditolak oleh Payment Gateway.");
+
+        saveOrder(newOrder);
+        toast(`Pesanan Dibuat! ID: ${orderId}`, 'success');
+        
+        // Tampilkan halaman QRIS Neo-Brutalism
+        setPaymentResult(resData.data);
+
+      } catch (err) {
+        console.error("Checkout Error:", err);
+        toast(err.message || "Terjadi kesalahan saat memproses pembayaran.", 'error');
+      } finally {
+        setIsProcessing(false);
+      }
+    } 
+    // ALUR FALLBACK (MANUAL WA)
+    else {
+      saveOrder(newOrder);
+      toast(`Pesanan Dibuat! ID: ${orderId}`, 'success');
+      
+      setTimeout(() => {
         const adminPhone = settings.waNumber || WA_NUMBER;
         const text = `Halo Admin JokiHub! 👋\n\nSaya ingin memesan layanan:\n*ID Pesanan:* ${orderId}\n*Layanan:* ${finalServiceName}\n*Nama:* ${clientName}\n*Urgensi:* ${urgency.toUpperCase()}\n*Total Tagihan:* ${formatRupiah(price)}\n\n*Catatan:*\n${notes || '-'}\n\nMohon instruksi pembayarannya. Terima kasih!`;
         const waUrl = formatWaLink(adminPhone, text);
         window.open(waUrl, '_blank');
-      }
-      
-      setClientName('');
-      setClientWa('');
-      setNotes('');
-    }, 1500);
+        
+        setClientName('');
+        setClientWa('');
+        setNotes('');
+      }, 1500);
+    }
   };
 
   return (
@@ -535,88 +676,119 @@ const OrderCalculator = () => {
           </div>
         </div>
 
-        <NeoCard color="bg-[#f4f4f0]" className="text-black">
-          <div className="space-y-4 md:space-y-5">
-            <div className="bg-black text-white p-3 border-2 md:border-4 border-black font-black uppercase text-center text-sm md:text-base shadow-[3px_3px_0px_0px_#FFDF00]">
-              Form Pemesanan
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              <NeoInput label="Nama Lengkap" type="text" placeholder="Budi Santoso" value={clientName} onChange={(e) => setClientName(e.target.value)} />
-              <NeoInput label="No WhatsApp" type="text" placeholder="0812345..." value={clientWa} onChange={(e) => setClientWa(e.target.value)} />
-            </div>
-
-            <NeoInput 
-              label="Pilih Layanan" 
-              type="select" 
-              value={service} 
-              onChange={(e) => setService(e.target.value)}
-              options={SERVICES.map(s => ({ value: s.id, label: s.title }))}
-            />
-
-            {service === 'sitasi' && (
-              <NeoInput label="Jumlah Halaman" type="number" value={pages} onChange={(e) => setPages(Math.max(1, e.target.value))} />
-            )}
-
-            {service === 'parafrase' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 bg-[#FFDF00] p-3 md:p-4 border-2 md:border-4 border-black">
-                <NeoInput label="Plagiasi Awal (%)" type="number" placeholder="45" value={currentPlagiasi} onChange={(e) => setCurrentPlagiasi(Math.max(0, Math.min(100, e.target.value)))} />
-                <NeoInput label="Target Plagiasi (%)" type="number" placeholder="25" value={targetPlagiasi} onChange={(e) => setTargetPlagiasi(Math.max(0, Math.min(100, e.target.value)))} />
+        {/* Jika paymentResult ada, tampilkan QRIS screen Neo-Brutalism, jika tidak tampilkan Form */}
+        {paymentResult ? (
+          <NeoPaymentScreen 
+            data={paymentResult} 
+            onClose={() => {
+              setPaymentResult(null);
+              setClientName('');
+              setClientWa('');
+            }} 
+          />
+        ) : (
+          <NeoCard color="bg-[#f4f4f0]" className="text-black">
+            <div className="space-y-4 md:space-y-5">
+              <div className="bg-black text-white p-3 border-2 md:border-4 border-black font-black uppercase text-center text-sm md:text-base shadow-[3px_3px_0px_0px_#FFDF00]">
+                Form Pemesanan
               </div>
-            )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                <NeoInput label="Nama Lengkap" type="text" placeholder="Budi Santoso" value={clientName} onChange={(e) => setClientName(e.target.value)} />
+                <NeoInput label="No WhatsApp" type="text" placeholder="0812345..." value={clientWa} onChange={(e) => setClientWa(e.target.value)} />
+              </div>
 
-            {service === 'skripsi' && (
               <NeoInput 
-                label="Berapa Bab?" 
+                label="Pilih Layanan" 
                 type="select" 
-                value={pages} 
-                onChange={(e) => setPages(e.target.value)}
-                options={[
-                  {value: 1, label: "1 Bab (Proposal)"},
-                  {value: 3, label: "Bab 1-3"},
-                  {value: 5, label: "Full Bab 1-5"},
-                ]}
+                value={service} 
+                onChange={(e) => setService(e.target.value)}
+                options={SERVICES.map(s => ({ value: s.id, label: s.title }))}
               />
-            )}
 
-            <div className="space-y-2">
-              <label className="font-black uppercase text-xs md:text-sm tracking-wider">Tingkat Urgensi</label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
-                {['santai', 'normal', 'ngebut'].map((u) => (
-                  <div 
-                    key={u}
-                    onClick={() => setUrgency(u)}
-                    className={`
-                      border-2 md:border-4 border-black py-2 text-center font-black text-xs md:text-sm uppercase cursor-pointer transition-all duration-300
-                      ${urgency === u ? 'bg-[#FF90E8] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] translate-y-0 scale-100' : 'bg-white hover:bg-gray-200 shadow-none sm:translate-y-0.5'}
-                    `}
-                  >
-                    {u}
-                  </div>
-                ))}
-              </div>
-            </div>
+              {service === 'sitasi' && (
+                <NeoInput label="Jumlah Halaman" type="number" value={pages} onChange={(e) => setPages(Math.max(1, e.target.value))} />
+              )}
 
-            <div className="bg-black text-white p-5 border-2 md:border-4 border-black -mx-4 -mb-4 md:-mx-6 md:-mb-6 mt-6 md:mt-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-[#FFDF00] rounded-full blur-2xl opacity-20"></div>
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 relative z-10">
-                <div className="w-full md:w-auto">
-                  <span className="font-bold uppercase tracking-wider text-[#A6FAFF] block mb-1 text-xs md:text-sm">Total Estimasi:</span>
-                  <span className="text-2xl md:text-3xl font-black text-white drop-shadow-[2px_2px_0_#3b82f6] break-words">{formatRupiah(calculatePrice())}</span>
+              {service === 'parafrase' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 bg-[#FFDF00] p-3 md:p-4 border-2 md:border-4 border-black">
+                  <NeoInput label="Plagiasi Awal (%)" type="number" placeholder="45" value={currentPlagiasi} onChange={(e) => setCurrentPlagiasi(Math.max(0, Math.min(100, e.target.value)))} />
+                  <NeoInput label="Target Plagiasi (%)" type="number" placeholder="25" value={targetPlagiasi} onChange={(e) => setTargetPlagiasi(Math.max(0, Math.min(100, e.target.value)))} />
                 </div>
-                {settings.acceptingOrders ? (
-                  <NeoButton onClick={handleOrder} icon={ShoppingCart} color="bg-[#FF90E8]" className="w-full md:w-auto text-sm md:text-base !px-5 !py-3 hover:rotate-2">
-                    CHECKOUT
-                  </NeoButton>
-                ) : (
-                  <div className="bg-red-500 text-white font-black px-5 py-3 border-2 md:border-4 border-black rotate-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] text-center text-sm md:text-base w-full md:w-auto cursor-not-allowed">
-                    TUTUP SEMENTARA
+              )}
+
+              {service === 'skripsi' && (
+                <NeoInput 
+                  label="Berapa Bab?" 
+                  type="select" 
+                  value={pages} 
+                  onChange={(e) => setPages(e.target.value)}
+                  options={[
+                    {value: 1, label: "1 Bab (Proposal)"},
+                    {value: 3, label: "Bab 1-3"},
+                    {value: 5, label: "Full Bab 1-5"},
+                  ]}
+                />
+              )}
+
+              <div className="space-y-2">
+                <label className="font-black uppercase text-xs md:text-sm tracking-wider">Tingkat Urgensi</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
+                  {['santai', 'normal', 'ngebut'].map((u) => (
+                    <div 
+                      key={u}
+                      onClick={() => setUrgency(u)}
+                      className={`
+                        border-2 md:border-4 border-black py-2 text-center font-black text-xs md:text-sm uppercase cursor-pointer transition-all duration-300
+                        ${urgency === u ? 'bg-[#FF90E8] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] translate-y-0 scale-100' : 'bg-white hover:bg-gray-200 shadow-none sm:translate-y-0.5'}
+                      `}
+                    >
+                      {u}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* INTEGRASI PEMILIHAN GATEWAY JIKA DIAKTIFKAN ADMIN */}
+              {settings.paymentMethod === 'gateway' && (
+                <div className="space-y-2 mt-4">
+                  <label className="font-black uppercase text-xs md:text-sm tracking-wider">Metode Pembayaran</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className={`cursor-pointer border-2 md:border-4 border-black p-3 transition-all flex items-center gap-3 ${gatewayMethod === 'gopay_qris' ? 'bg-[#A6FAFF] shadow-[3px_3px_0_0_rgba(0,0,0,1)]' : 'bg-white'}`}>
+                      <input type="radio" value="gopay_qris" checked={gatewayMethod === 'gopay_qris'} onChange={() => setGatewayMethod('gopay_qris')} className="hidden" />
+                      <QrCode className={gatewayMethod === 'gopay_qris' ? "text-black" : "text-gray-500"} />
+                      <span className="font-black text-xs md:text-sm uppercase">QRIS</span>
+                    </label>
+                    <label className={`cursor-pointer border-2 md:border-4 border-black p-3 transition-all flex items-center gap-3 ${gatewayMethod === 'ovo' ? 'bg-[#A6FAFF] shadow-[3px_3px_0_0_rgba(0,0,0,1)]' : 'bg-white'}`}>
+                      <input type="radio" value="ovo" checked={gatewayMethod === 'ovo'} onChange={() => setGatewayMethod('ovo')} className="hidden" />
+                      <Smartphone className={gatewayMethod === 'ovo' ? "text-black" : "text-gray-500"} />
+                      <span className="font-black text-xs md:text-sm uppercase">OVO</span>
+                    </label>
                   </div>
-                )}
+                </div>
+              )}
+
+              <div className="bg-black text-white p-5 border-2 md:border-4 border-black -mx-4 -mb-4 md:-mx-6 md:-mb-6 mt-6 md:mt-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-[#FFDF00] rounded-full blur-2xl opacity-20"></div>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 relative z-10">
+                  <div className="w-full md:w-auto">
+                    <span className="font-bold uppercase tracking-wider text-[#A6FAFF] block mb-1 text-xs md:text-sm">Total Estimasi:</span>
+                    <span className="text-2xl md:text-3xl font-black text-white drop-shadow-[2px_2px_0_#3b82f6] break-words">{formatRupiah(calculatePrice())}</span>
+                  </div>
+                  {settings.acceptingOrders ? (
+                    <NeoButton disabled={isProcessing} onClick={handleOrder} icon={isProcessing ? Loader2 : ShoppingCart} color="bg-[#FF90E8]" className="w-full md:w-auto text-sm md:text-base !px-5 !py-3 hover:rotate-2">
+                      {isProcessing ? 'MEMPROSES...' : 'CHECKOUT'}
+                    </NeoButton>
+                  ) : (
+                    <div className="bg-red-500 text-white font-black px-5 py-3 border-2 md:border-4 border-black rotate-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] text-center text-sm md:text-base w-full md:w-auto cursor-not-allowed">
+                      TUTUP SEMENTARA
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </NeoCard>
+          </NeoCard>
+        )}
       </div>
     </section>
   );
@@ -848,7 +1020,7 @@ const AdminDashboard = ({ onLogout }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [orders, setOrders] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [adminSettings, setAdminSettings] = useState({ waNumber: '', acceptingOrders: true, paymentMethod: 'whatsapp' });
+  const [adminSettings, setAdminSettings] = useState({ waNumber: '', acceptingOrders: true, paymentMethod: 'gateway' });
   const toast = useToast();
 
   useEffect(() => { 
@@ -877,7 +1049,6 @@ const AdminDashboard = ({ onLogout }) => {
        text += `Ada yang bisa kami bantu atau diskusikan terkait pesanan ini?`;
     }
     
-    // Gunakan helper anti-error
     const waUrl = formatWaLink(order.wa, text);
     window.open(waUrl, '_blank');
   };
@@ -1146,15 +1317,15 @@ const AdminDashboard = ({ onLogout }) => {
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-2 md:border-4 border-black bg-[#f4f4f0] gap-4">
                     <div>
                       <h4 className="font-black uppercase text-sm md:text-base">Metode Pembayaran (Checkout)</h4>
-                      <p className="text-xs md:text-sm font-bold text-gray-600 mt-1">Ubah ke WhatsApp jika Pakkasir sedang gangguan.</p>
+                      <p className="text-xs md:text-sm font-bold text-gray-600 mt-1">Ubah ke WhatsApp jika Bayar.GG sedang gangguan.</p>
                     </div>
                     <select 
                       value={adminSettings.paymentMethod}
                       onChange={(e) => setAdminSettings({...adminSettings, paymentMethod: e.target.value})}
                       className="border-2 md:border-4 border-black bg-white p-2 text-xs md:text-sm font-black focus:outline-none focus:bg-[#A6FAFF] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] w-full sm:w-auto"
                     >
+                      <option value="gateway">Via Gateway (Bayar.GG)</option>
                       <option value="whatsapp">Direct Invoice (WhatsApp)</option>
-                      <option value="pakkasir">Via Gateway (Pakkasir)</option>
                     </select>
                   </div>
 
@@ -1252,3 +1423,4 @@ export default function App() {
     </ToastProvider>
   );
 }
+
