@@ -90,7 +90,6 @@ const updateOrderStatus = (id, status) => {
 // --- PENGATURAN GLOBAL ---
 const getSettings = () => {
   const saved = localStorage.getItem('jokihub_settings');
-  // NOTE: Ubah default paymentMethod ke 'gateway' agar otomatis pakai Bayar.GG
   return saved ? JSON.parse(saved) : { waNumber: "6285856618965", acceptingOrders: true, paymentMethod: 'gateway' };
 };
 
@@ -542,8 +541,8 @@ const OrderCalculator = () => {
   const [currentPlagiasi, setCurrentPlagiasi] = useState('');
   const [targetPlagiasi, setTargetPlagiasi] = useState('');
   
-  // STATE GATEWAY
-  const [gatewayMethod, setGatewayMethod] = useState('gopay_qris');
+  // STATE GATEWAY (DIPERBAIKI: Menggunakan 'qris' standar sebagai default, bukan gopay_qris)
+  const [gatewayMethod, setGatewayMethod] = useState('qris');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentResult, setPaymentResult] = useState(null);
 
@@ -618,7 +617,7 @@ const OrderCalculator = () => {
         }
 
         const resData = await response.json();
-        if (!resData.success) throw new Error(resData.message || "Transaksi ditolak oleh Payment Gateway.");
+        if (!resData.success) throw new Error(resData.message || resData.error || "Transaksi ditolak oleh Payment Gateway.");
 
         saveOrder(newOrder);
         toast(`Pesanan Dibuat! ID: ${orderId}`, 'success');
@@ -628,6 +627,7 @@ const OrderCalculator = () => {
 
       } catch (err) {
         console.error("Checkout Error:", err);
+        // Error handling yang lebih spesifik jika Bayar.GG menolak
         toast(err.message || "Terjadi kesalahan saat memproses pembayaran.", 'error');
       } finally {
         setIsProcessing(false);
@@ -676,7 +676,6 @@ const OrderCalculator = () => {
           </div>
         </div>
 
-        {/* Jika paymentResult ada, tampilkan QRIS screen Neo-Brutalism, jika tidak tampilkan Form */}
         {paymentResult ? (
           <NeoPaymentScreen 
             data={paymentResult} 
@@ -749,14 +748,14 @@ const OrderCalculator = () => {
                 </div>
               </div>
 
-              {/* INTEGRASI PEMILIHAN GATEWAY JIKA DIAKTIFKAN ADMIN */}
               {settings.paymentMethod === 'gateway' && (
                 <div className="space-y-2 mt-4">
                   <label className="font-black uppercase text-xs md:text-sm tracking-wider">Metode Pembayaran</label>
                   <div className="grid grid-cols-2 gap-3">
-                    <label className={`cursor-pointer border-2 md:border-4 border-black p-3 transition-all flex items-center gap-3 ${gatewayMethod === 'gopay_qris' ? 'bg-[#A6FAFF] shadow-[3px_3px_0_0_rgba(0,0,0,1)]' : 'bg-white'}`}>
-                      <input type="radio" value="gopay_qris" checked={gatewayMethod === 'gopay_qris'} onChange={() => setGatewayMethod('gopay_qris')} className="hidden" />
-                      <QrCode className={gatewayMethod === 'gopay_qris' ? "text-black" : "text-gray-500"} />
+                    {/* DIPERBAIKI: Value dan onClick menggunakan 'qris' murni, bukan gopay_qris */}
+                    <label className={`cursor-pointer border-2 md:border-4 border-black p-3 transition-all flex items-center gap-3 ${gatewayMethod === 'qris' ? 'bg-[#A6FAFF] shadow-[3px_3px_0_0_rgba(0,0,0,1)]' : 'bg-white'}`}>
+                      <input type="radio" value="qris" checked={gatewayMethod === 'qris'} onChange={() => setGatewayMethod('qris')} className="hidden" />
+                      <QrCode className={gatewayMethod === 'qris' ? "text-black" : "text-gray-500"} />
                       <span className="font-black text-xs md:text-sm uppercase">QRIS</span>
                     </label>
                     <label className={`cursor-pointer border-2 md:border-4 border-black p-3 transition-all flex items-center gap-3 ${gatewayMethod === 'ovo' ? 'bg-[#A6FAFF] shadow-[3px_3px_0_0_rgba(0,0,0,1)]' : 'bg-white'}`}>
@@ -765,6 +764,10 @@ const OrderCalculator = () => {
                       <span className="font-black text-xs md:text-sm uppercase">OVO</span>
                     </label>
                   </div>
+                  {/* Tambahan pesan kecil jika OVO tidak jalan */}
+                  {gatewayMethod === 'ovo' && (
+                    <p className="text-[10px] text-gray-500 italic mt-1 font-bold">*Pastikan Anda sudah mengaktifkan OVO di Dashboard Bayar.GG</p>
+                  )}
                 </div>
               )}
 
@@ -1423,4 +1426,6 @@ export default function App() {
     </ToastProvider>
   );
 }
+
+
 
