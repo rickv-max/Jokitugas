@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Check, Star, ShoppingCart, User, LayoutDashboard, Settings, 
+  Check, Star, ShoppingCart, LayoutDashboard, Settings, 
   LogOut, Send, AlertCircle, Loader2, Menu, X, 
-  Calculator, BookOpen, GraduationCap, Copy, FileText, 
+  BookOpen, GraduationCap, Copy, FileText, 
   ArrowRight, ShieldCheck, Clock, CheckCircle2, ChevronRight,
-  TrendingUp, Users, DollarSign, Activity, Zap, QrCode, Smartphone
+  Activity, Zap, QrCode, Smartphone, User, MessageCircle
 } from 'lucide-react';
 
 /* ==========================================================================
@@ -42,12 +42,11 @@ const formatRupiah = (number) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
 };
 
-// HELPER: Format Nomor WA yang anti-error (Ubah 08 jadi 628)
 const formatWaLink = (phone, text = "") => {
   if (!phone) return "";
-  let formatted = phone.replace(/[^0-9]/g, ''); // Hapus semua karakter non-angka
+  let formatted = phone.replace(/[^0-9]/g, ''); 
   if (formatted.startsWith('0')) {
-    formatted = '62' + formatted.substring(1); // Ganti awalan 0 menjadi 62
+    formatted = '62' + formatted.substring(1); 
   }
   let url = `https://api.whatsapp.com/send?phone=${formatted}`;
   if (text) {
@@ -57,21 +56,19 @@ const formatWaLink = (phone, text = "") => {
 };
 
 const WA_NUMBER = "6285856618965";
+
+// UPDATE LAYANAN SESUAI PERMINTAAN
 const SERVICES = [
   { id: 'sma', title: 'Tugas SMA/SMK', icon: BookOpen, basePrice: 20000, color: 'bg-[#FF90E8]' },
-  { id: 'skripsi', title: 'Skripsi Bab 1-5', icon: GraduationCap, basePrice: 500000, color: 'bg-[#A6FAFF]' },
-  { id: 'parafrase', title: 'Parafrase/Turnitin', icon: Copy, basePrice: 8000, color: 'bg-[#FFDF00]' },
-  { id: 'sitasi', title: 'Sitasi & Daftar Pustaka', icon: FileText, basePrice: 10000, color: 'bg-[#90EE90]' },
-];
-
-const MOCK_ORDERS = [
-  { id: 'ORD-001', client: 'Budi Santoso', wa: '08123456789', service: 'Skripsi Bab 1-5', amount: 1500000, status: 'process', date: '2026-05-01' },
-  { id: 'ORD-002', client: 'Siti Aminah', wa: '628987654321', service: 'Parafrase', amount: 150000, status: 'pending', date: '2026-05-02' },
+  { id: 'makalah', title: 'Joki Makalah', icon: FileText, basePrice: 30000, color: 'bg-[#FFB6C1]' },
+  { id: 'skripsi', title: 'Skripsi (+ Sitasi)', icon: GraduationCap, basePrice: 50000, color: 'bg-[#A6FAFF]' },
+  { id: 'parafrase', title: 'Parafrase/Turnitin', icon: Copy, basePrice: 4000, color: 'bg-[#FFDF00]' },
+  { id: 'sitasi', title: 'Sitasi & Daftar Pustaka', icon: FileText, basePrice: 7000, color: 'bg-[#90EE90]' },
 ];
 
 const getOrders = () => {
   const saved = localStorage.getItem('jokihub_orders');
-  return saved ? JSON.parse(saved) : MOCK_ORDERS;
+  return saved ? JSON.parse(saved) : [];
 };
 
 const saveOrder = (order) => {
@@ -87,7 +84,6 @@ const updateOrderStatus = (id, status) => {
   return updated;
 };
 
-// --- PENGATURAN GLOBAL ---
 const getSettings = () => {
   const saved = localStorage.getItem('jokihub_settings');
   return saved ? JSON.parse(saved) : { waNumber: "6285856618965", acceptingOrders: true, paymentMethod: 'gateway' };
@@ -239,11 +235,7 @@ const NeoCard = ({ children, className = "", color = "bg-white", onClick }) => {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onClick={onClick}
-      className={`
-        border-2 md:border-4 border-black ${color} p-4 md:p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] 
-        transition-colors duration-200
-        ${onClick ? 'cursor-pointer' : ''} ${className}
-      `}
+      className={`border-2 md:border-4 border-black ${color} p-4 md:p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-colors duration-200 ${onClick ? 'cursor-pointer' : ''} ${className}`}
       style={{ transformStyle: 'preserve-3d' }}
     >
       <div style={{ transform: 'translateZ(20px)' }}>
@@ -257,19 +249,10 @@ const NeoButton = ({ children, onClick, className = "", color = "bg-[#FFDF00]", 
   <button
     disabled={disabled}
     onClick={onClick}
-    className={`
-      group relative inline-flex items-center justify-center gap-2 px-4 py-2 md:px-6 md:py-3 
-      text-sm md:text-base font-black uppercase tracking-wider text-black overflow-hidden
-      border-2 md:border-4 border-black ${color} shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
-      transition-all duration-200 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none
-      hover:-translate-y-1 hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-white
-      disabled:opacity-50 disabled:cursor-not-allowed
-      ${className}
-    `}
+    className={`group relative inline-flex items-center justify-center gap-2 px-4 py-2 md:px-6 md:py-3 text-sm md:text-base font-black uppercase tracking-wider text-black overflow-hidden border-2 md:border-4 border-black ${color} shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:-translate-y-1 hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-white disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
   >
     <span className="absolute inset-0 bg-[#A6FAFF] translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out z-0" />
     <span className="absolute inset-0 bg-[#FF90E8] translate-y-full group-hover:-translate-y-full transition-transform duration-500 ease-in-out delay-75 z-0" />
-    
     <span className="relative z-10 flex items-center justify-center gap-2 w-full">
       {children}
       {Icon && <Icon className="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:translate-x-1 group-hover:rotate-12 group-hover:text-[#FFDF00]" />}
@@ -277,32 +260,17 @@ const NeoButton = ({ children, onClick, className = "", color = "bg-[#FFDF00]", 
   </button>
 );
 
-const NeoInput = ({ label, type = "text", value, onChange, placeholder, options = [], className="" }) => (
+const NeoInput = ({ label, type = "text", value, onChange, placeholder, options = [], className="", min, max }) => (
   <div className={`flex flex-col gap-1 md:gap-2 ${className} group`}>
     {label && <label className="font-black uppercase text-xs md:text-sm tracking-wider transition-colors group-focus-within:text-[#3b82f6]">{label}</label>}
     {type === 'select' ? (
-      <select 
-        value={value} 
-        onChange={onChange}
-        className="w-full border-2 md:border-4 border-black bg-white p-2 md:p-3 text-sm md:text-base font-bold focus:outline-none focus:bg-[#A6FAFF] focus:-translate-y-1 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-      >
+      <select value={value} onChange={onChange} className="w-full border-2 md:border-4 border-black bg-white p-2 md:p-3 text-sm md:text-base font-bold focus:outline-none focus:bg-[#A6FAFF] focus:-translate-y-1 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
       </select>
     ) : type === 'textarea' ? (
-      <textarea 
-        value={value} 
-        onChange={onChange}
-        placeholder={placeholder}
-        className="w-full border-2 md:border-4 border-black bg-white p-2 md:p-3 text-sm md:text-base font-bold focus:outline-none focus:bg-[#A6FAFF] focus:-translate-y-1 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] min-h-[80px] md:min-h-[100px] resize-none"
-      />
+      <textarea value={value} onChange={onChange} placeholder={placeholder} className="w-full border-2 md:border-4 border-black bg-white p-2 md:p-3 text-sm md:text-base font-bold focus:outline-none focus:bg-[#A6FAFF] focus:-translate-y-1 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] min-h-[80px] md:min-h-[100px] resize-none" />
     ) : (
-      <input 
-        type={type} 
-        value={value} 
-        onChange={onChange}
-        placeholder={placeholder}
-        className="w-full border-2 md:border-4 border-black bg-white p-2 md:p-3 text-sm md:text-base font-bold focus:outline-none focus:bg-[#A6FAFF] focus:-translate-y-1 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-      />
+      <input type={type} min={min} max={max} value={value} onChange={onChange} placeholder={placeholder} className="w-full border-2 md:border-4 border-black bg-white p-2 md:p-3 text-sm md:text-base font-bold focus:outline-none focus:bg-[#A6FAFF] focus:-translate-y-1 transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" />
     )}
   </div>
 );
@@ -324,17 +292,10 @@ const SplitTextReveal = ({ text, className = "", triggerRef }) => {
   useEffect(() => {
     if (!gsap || !containerRef.current || !window.ScrollTrigger) return;
     const chars = containerRef.current.querySelectorAll('.char');
-    
     gsap.fromTo(chars, 
       { y: 50, opacity: 0, rotate: 15, scale: 0.8 },
-      { 
-        y: 0, opacity: 1, rotate: 0, scale: 1, 
-        stagger: 0.03, duration: 0.8, ease: "elastic.out(1, 0.5)",
-        scrollTrigger: {
-          trigger: triggerRef ? triggerRef.current : containerRef.current,
-          start: "top 85%",
-          toggleActions: "play none none reverse"
-        }
+      { y: 0, opacity: 1, rotate: 0, scale: 1, stagger: 0.03, duration: 0.8, ease: "elastic.out(1, 0.5)",
+        scrollTrigger: { trigger: triggerRef ? triggerRef.current : containerRef.current, start: "top 85%", toggleActions: "play none none reverse" }
       }
     );
   }, [gsap, text, triggerRef]);
@@ -343,9 +304,7 @@ const SplitTextReveal = ({ text, className = "", triggerRef }) => {
     <div ref={containerRef} className={`overflow-hidden flex flex-wrap ${className}`}>
       {text.split(' ').map((word, i) => (
         <div key={i} className="inline-flex mr-[0.25em] overflow-hidden p-1">
-          {word.split('').map((char, j) => (
-            <span key={j} className="char inline-block">{char}</span>
-          ))}
+          {word.split('').map((char, j) => (<span key={j} className="char inline-block">{char}</span>))}
         </div>
       ))}
     </div>
@@ -358,13 +317,9 @@ const ScrollStagger = ({ children, className="" }) => {
 
   useEffect(() => {
     if (!gsap || !window.ScrollTrigger) return;
-    const elements = containerRef.current.children;
-    gsap.fromTo(elements, 
+    gsap.fromTo(containerRef.current.children, 
       { y: 50, opacity: 0, scale: 0.95 },
-      { 
-        y: 0, opacity: 1, scale: 1, stagger: 0.1, duration: 0.6, ease: "back.out(1.2)",
-        scrollTrigger: { trigger: containerRef.current, start: "top 85%" }
-      }
+      { y: 0, opacity: 1, scale: 1, stagger: 0.1, duration: 0.6, ease: "back.out(1.2)", scrollTrigger: { trigger: containerRef.current, start: "top 85%" } }
     );
   }, [gsap]);
 
@@ -380,9 +335,7 @@ const Marquee = ({ text }) => (
         </span>
       ))}
     </div>
-    <style>{`
-      @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-    `}</style>
+    <style>{`@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
   </div>
 );
 
@@ -402,24 +355,14 @@ const ToastProvider = ({ children }) => {
       {children}
       <div className="fixed bottom-4 right-4 z-[200] flex flex-col gap-3 pointer-events-none">
         {toasts.map(t => (
-          <div key={t.id} className={`
-            pointer-events-auto flex items-center gap-3 p-3 md:p-4 border-2 md:border-4 border-black 
-            shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-[slideInToast_0.4s_cubic-bezier(0.175,0.885,0.32,1.275)]
-            ${t.type === 'success' ? 'bg-[#90EE90]' : 'bg-[#FF90E8]'}
-            hover:scale-105 transition-transform max-w-xs md:max-w-sm
-          `}>
+          <div key={t.id} className={`pointer-events-auto flex items-center gap-3 p-3 md:p-4 border-2 md:border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-[slideInToast_0.4s_cubic-bezier(0.175,0.885,0.32,1.275)] ${t.type === 'success' ? 'bg-[#90EE90]' : 'bg-[#FF90E8]'} hover:scale-105 transition-transform max-w-xs md:max-w-sm`}>
             {t.type === 'success' ? <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 shrink-0" /> : <AlertCircle className="w-5 h-5 md:w-6 md:h-6 shrink-0" />}
             <span className="font-black text-xs md:text-sm">{t.message}</span>
             <button onClick={() => removeToast(t.id)} className="ml-auto bg-white border-2 border-black p-0.5 hover:bg-black hover:text-white transition-colors"><X className="w-4 h-4" /></button>
           </div>
         ))}
       </div>
-      <style>{`
-        @keyframes slideInToast { 
-          from { transform: translateX(120%) rotate(5deg); opacity: 0; } 
-          to { transform: translateX(0) rotate(0); opacity: 1; } 
-        }
-      `}</style>
+      <style>{`@keyframes slideInToast { from { transform: translateX(120%) rotate(5deg); opacity: 0; } to { transform: translateX(0) rotate(0); opacity: 1; } }`}</style>
     </ToastContext.Provider>
   );
 };
@@ -429,28 +372,27 @@ const useToast = () => React.useContext(ToastContext);
    💳 NEO-BRUTALISM PAYMENT SCREEN (Terhubung Bayar.GG)
    ========================================================================== */
 
-const NeoPaymentScreen = ({ data, onClose }) => {
+const NeoPaymentScreen = ({ data, orderId, onClose }) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const toast = useToast();
 
   useEffect(() => {
     if (!data?.expires_at) return;
-
     const updateTimer = () => {
       const expiry = new Date(data.expires_at.replace(' ', 'T')).getTime(); 
       const now = new Date().getTime();
       const diff = Math.floor((expiry - now) / 1000);
       setTimeLeft(diff <= 0 ? 0 : diff);
     };
-
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [data?.expires_at]);
 
-  const copyToClipboard = (text) => {
+  const copyToClipboard = (text, type = 'nominal') => {
     navigator.clipboard.writeText(text);
-    toast('Berhasil Disalin! WAJIB TRANSFER SESUAI NOMINAL INI.', 'success');
+    if(type === 'nominal') toast('Berhasil Disalin! WAJIB TRANSFER SESUAI NOMINAL INI.', 'success');
+    else toast('ID Pesanan Disalin!', 'success');
   };
 
   const formatTime = (secs) => {
@@ -458,6 +400,11 @@ const NeoPaymentScreen = ({ data, onClose }) => {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handleAdminChat = () => {
+    const text = `Halo Admin JokiHub! 👋\n\nSaya baru saja membuat pesanan.\n*ID Pesanan:* ${orderId}\nMohon info lebih lanjutnya ya. Terima kasih!`;
+    window.open(formatWaLink(WA_NUMBER, text), '_blank');
   };
 
   if (!data) return null;
@@ -476,9 +423,21 @@ const NeoPaymentScreen = ({ data, onClose }) => {
       </div>
 
       <NeoCard color="bg-white">
+        
+        {/* KOTAK ID PESANAN (BARU) */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-black text-white p-4 border-4 border-black shadow-[4px_4px_0_0_#FF90E8] mb-6">
+          <div>
+            <p className="text-xs uppercase font-bold text-[#FF90E8] mb-1 tracking-widest">ID Pesanan Anda</p>
+            <h2 className="text-2xl md:text-3xl font-black tracking-widest">{orderId}</h2>
+          </div>
+          <NeoButton color="bg-[#FF90E8]" className="!py-2 w-full md:w-auto" icon={Copy} onClick={() => copyToClipboard(orderId, 'id')}>
+            SALIN ID
+          </NeoButton>
+        </div>
+
         <div className="text-center mb-6 border-b-4 border-black pb-6">
           <p className="font-black uppercase text-sm mb-2 text-gray-500 tracking-wider">Total Tagihan Pembayaran</p>
-          <div className="bg-[#FFDF00] border-4 border-black p-4 inline-block transform -rotate-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)] cursor-pointer hover:rotate-0 transition-transform" onClick={() => copyToClipboard(data.final_amount?.toString())}>
+          <div className="bg-[#FFDF00] border-4 border-black p-4 inline-block transform -rotate-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)] cursor-pointer hover:rotate-0 transition-transform" onClick={() => copyToClipboard(data.final_amount?.toString(), 'nominal')}>
             <div className="flex items-center justify-center gap-3">
               <h1 className="text-3xl md:text-5xl font-black">{formatRupiah(data.final_amount || 0)}</h1>
               <Copy className="w-6 h-6 hover:text-white" />
@@ -514,9 +473,15 @@ const NeoPaymentScreen = ({ data, onClose }) => {
           </div>
         )}
 
-        <div className="bg-[#f4f4f0] border-4 border-black p-4 font-bold text-sm mb-6 flex gap-3 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-          <AlertCircle className="shrink-0 text-[#FF90E8]" />
-          <p>Setelah melakukan pembayaran, sistem akan memverifikasi otomatis. Status pesanan Anda akan berubah di bagian <span className="underline">Lacak Pesanan</span>.</p>
+        {/* KOTAK HUBUNGI ADMIN (BARU) */}
+        <div className="bg-[#A6FAFF] border-4 border-black p-4 font-bold text-sm mb-6 flex flex-col gap-4 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+          <div className="flex items-start gap-3">
+            <MessageCircle className="shrink-0 text-black mt-0.5" />
+            <p className="leading-relaxed">Setelah pembayaran sukses, Admin kami akan segera menghubungi Anda untuk info pengerjaan lebih lanjut. Anda juga bisa langsung *chat* Admin sekarang!</p>
+          </div>
+          <NeoButton color="bg-white" className="w-full text-black !py-3" icon={Send} onClick={handleAdminChat}>
+            CHAT ADMIN SEKARANG
+          </NeoButton>
         </div>
 
         <NeoButton onClick={onClose} color="bg-black" className="w-full text-white" icon={Check}>
@@ -528,41 +493,63 @@ const NeoPaymentScreen = ({ data, onClose }) => {
 };
 
 /* ==========================================================================
-   📱 CLIENT VIEWS & ORDER CALCULATOR (INTEGRASI GATEWAY)
+   📱 CLIENT VIEWS & ORDER CALCULATOR (INTEGRASI ALGORITMA BARU)
    ========================================================================== */
 
 const OrderCalculator = () => {
   const [service, setService] = useState('sma');
-  const [pages, setPages] = useState(1);
+  
+  // Custom States untuk Form Dinamis
+  const [skripsiPackage, setSkripsiPackage] = useState('bab1_3');
+  const [makalahPages, setMakalahPages] = useState(5);
+  const [sitasiPages, setSitasiPages] = useState(1);
+  const [currentPlagiasi, setCurrentPlagiasi] = useState('');
+  const [targetPlagiasi, setTargetPlagiasi] = useState('');
+  
   const [urgency, setUrgency] = useState('santai');
   const [notes, setNotes] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientWa, setClientWa] = useState('');
-  const [currentPlagiasi, setCurrentPlagiasi] = useState('');
-  const [targetPlagiasi, setTargetPlagiasi] = useState('');
   
-  // STATE GATEWAY (DIPERBAIKI: Menggunakan 'qris' standar sebagai default, bukan gopay_qris)
   const [gatewayMethod, setGatewayMethod] = useState('qris');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentResult, setPaymentResult] = useState(null);
+  const [currentOrderId, setCurrentOrderId] = useState('');
 
   const toast = useToast();
   const calcRef = useRef(null);
   const settings = getSettings(); 
 
   const calculatePrice = () => {
-    const base = SERVICES.find(s => s.id === service)?.basePrice || 0;
-    let total = base;
+    let base = 0;
     
-    if (service === 'sitasi') total = base * pages;
-    if (service === 'skripsi') total = base * (pages / 5); 
-    if (service === 'parafrase') {
-      const diff = Math.max(0, (Number(currentPlagiasi) || 0) - (Number(targetPlagiasi) || 0));
-      total = diff * 8000;
+    if (service === 'sma') base = 20000;
+    
+    if (service === 'sitasi') {
+      base = Math.max(1, sitasiPages) * 7000; // Rp 7.000 per halaman
     }
     
-    const urgencyMultiplier = { santai: 1, normal: 1.5, ngebut: 2 };
-    return total * urgencyMultiplier[urgency];
+    if (service === 'skripsi') {
+      if (skripsiPackage === 'bab1') base = 50000; // Bab 1 = 50rb
+      if (skripsiPackage === 'bab1_3') base = 150000; // Bab 1-3 = 150rb
+      if (skripsiPackage === 'bab4_5') base = 250000; // Bab 4-5 = 250rb
+      if (skripsiPackage === 'full') base = 500000; // Full 1-5 = 500rb
+    }
+    
+    if (service === 'parafrase') {
+      const diff = Math.max(0, (Number(currentPlagiasi) || 0) - (Number(targetPlagiasi) || 0));
+      base = diff * 4000; // Rp 4.000 per 1% turun
+    }
+    
+    if (service === 'makalah') {
+      const p = Math.max(5, Math.min(15, makalahPages)); // Min 5, Max 15
+      base = 30000 + ((p - 5) * 5000); // 5 hal = 30rb, next hal = +5rb
+    }
+    
+    // Algoritma Urgensi: Santai = 0, Normal = +10rb, Ngebut = +30rb
+    const urgencyAdd = urgency === 'santai' ? 0 : urgency === 'normal' ? 10000 : 30000;
+    
+    return base + urgencyAdd;
   };
 
   const handleOrder = async () => {
@@ -575,9 +562,18 @@ const OrderCalculator = () => {
     
     const price = calculatePrice();
     const baseServiceName = SERVICES.find(s => s.id === service)?.title;
-    const serviceDetail = service === 'parafrase' 
-      ? ` (${currentPlagiasi}% ke ${targetPlagiasi}%)` 
-      : service === 'skripsi' ? ` (${pages} Bab)` : service === 'sitasi' ? ` (${pages} Hal)` : '';
+    
+    let serviceDetail = '';
+    if (service === 'parafrase') serviceDetail = ` (${currentPlagiasi}% ke ${targetPlagiasi}%)`;
+    if (service === 'skripsi') {
+      const pkgLabel = {
+        'bab1': 'Bab 1', 'bab1_3': 'Bab 1-3', 'bab4_5': 'Bab 4-5', 'full': 'Full Bab 1-5'
+      }[skripsiPackage];
+      serviceDetail = ` (${pkgLabel})`;
+    }
+    if (service === 'sitasi') serviceDetail = ` (${sitasiPages} Hal)`;
+    if (service === 'makalah') serviceDetail = ` (${makalahPages} Hal)`;
+    
     const finalServiceName = baseServiceName + serviceDetail;
 
     const orderId = 'ORD-' + Math.floor(1000 + Math.random() * 9000);
@@ -594,7 +590,6 @@ const OrderCalculator = () => {
       notes: notes
     };
 
-    // ALUR PEMBAYARAN BARU (GATEWAY BAYAR.GG)
     if (settings.paymentMethod === 'gateway') {
       setIsProcessing(true);
       try {
@@ -622,19 +617,16 @@ const OrderCalculator = () => {
         saveOrder(newOrder);
         toast(`Pesanan Dibuat! ID: ${orderId}`, 'success');
         
-        // Tampilkan halaman QRIS Neo-Brutalism
+        setCurrentOrderId(orderId);
         setPaymentResult(resData.data);
 
       } catch (err) {
         console.error("Checkout Error:", err);
-        // Error handling yang lebih spesifik jika Bayar.GG menolak
         toast(err.message || "Terjadi kesalahan saat memproses pembayaran.", 'error');
       } finally {
         setIsProcessing(false);
       }
-    } 
-    // ALUR FALLBACK (MANUAL WA)
-    else {
+    } else {
       saveOrder(newOrder);
       toast(`Pesanan Dibuat! ID: ${orderId}`, 'success');
       
@@ -679,10 +671,12 @@ const OrderCalculator = () => {
         {paymentResult ? (
           <NeoPaymentScreen 
             data={paymentResult} 
+            orderId={currentOrderId}
             onClose={() => {
               setPaymentResult(null);
               setClientName('');
               setClientWa('');
+              setCurrentOrderId('');
             }} 
           />
         ) : (
@@ -705,27 +699,34 @@ const OrderCalculator = () => {
                 options={SERVICES.map(s => ({ value: s.id, label: s.title }))}
               />
 
+              {/* DYNAMIC FORMS BERDASARKAN LAYANAN */}
+              
               {service === 'sitasi' && (
-                <NeoInput label="Jumlah Halaman" type="number" value={pages} onChange={(e) => setPages(Math.max(1, e.target.value))} />
+                <NeoInput label="Jumlah Halaman (Dafpus/Sitasi)" type="number" min="1" value={sitasiPages} onChange={(e) => setSitasiPages(Math.max(1, e.target.value))} />
+              )}
+
+              {service === 'makalah' && (
+                <NeoInput label="Jumlah Halaman Makalah (5-15 Hal)" type="number" min="5" max="15" value={makalahPages} onChange={(e) => setMakalahPages(e.target.value)} />
               )}
 
               {service === 'parafrase' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 bg-[#FFDF00] p-3 md:p-4 border-2 md:border-4 border-black">
-                  <NeoInput label="Plagiasi Awal (%)" type="number" placeholder="45" value={currentPlagiasi} onChange={(e) => setCurrentPlagiasi(Math.max(0, Math.min(100, e.target.value)))} />
-                  <NeoInput label="Target Plagiasi (%)" type="number" placeholder="25" value={targetPlagiasi} onChange={(e) => setTargetPlagiasi(Math.max(0, Math.min(100, e.target.value)))} />
+                  <NeoInput label="Plagiasi Awal (%)" type="number" min="0" max="100" placeholder="45" value={currentPlagiasi} onChange={(e) => setCurrentPlagiasi(Math.max(0, Math.min(100, e.target.value)))} />
+                  <NeoInput label="Target Plagiasi (%)" type="number" min="0" max="100" placeholder="20" value={targetPlagiasi} onChange={(e) => setTargetPlagiasi(Math.max(0, Math.min(100, e.target.value)))} />
                 </div>
               )}
 
               {service === 'skripsi' && (
                 <NeoInput 
-                  label="Berapa Bab?" 
+                  label="Pilih Paket Skripsi (Sudah termasuk Sitasi)" 
                   type="select" 
-                  value={pages} 
-                  onChange={(e) => setPages(e.target.value)}
+                  value={skripsiPackage} 
+                  onChange={(e) => setSkripsiPackage(e.target.value)}
                   options={[
-                    {value: 1, label: "1 Bab (Proposal)"},
-                    {value: 3, label: "Bab 1-3"},
-                    {value: 5, label: "Full Bab 1-5"},
+                    {value: 'bab1', label: "Bab 1 (Proposal)"},
+                    {value: 'bab1_3', label: "Bab 1-3"},
+                    {value: 'bab4_5', label: "Bab 4-5"},
+                    {value: 'full', label: "Full Bab 1-5"},
                   ]}
                 />
               )}
@@ -733,16 +734,17 @@ const OrderCalculator = () => {
               <div className="space-y-2">
                 <label className="font-black uppercase text-xs md:text-sm tracking-wider">Tingkat Urgensi</label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
-                  {['santai', 'normal', 'ngebut'].map((u) => (
+                  {[
+                    { id: 'santai', label: 'SANTAI (+0)' }, 
+                    { id: 'normal', label: 'NORMAL (+10rb)' }, 
+                    { id: 'ngebut', label: 'NGEBUT (+30rb)' }
+                  ].map((u) => (
                     <div 
-                      key={u}
-                      onClick={() => setUrgency(u)}
-                      className={`
-                        border-2 md:border-4 border-black py-2 text-center font-black text-xs md:text-sm uppercase cursor-pointer transition-all duration-300
-                        ${urgency === u ? 'bg-[#FF90E8] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] translate-y-0 scale-100' : 'bg-white hover:bg-gray-200 shadow-none sm:translate-y-0.5'}
-                      `}
+                      key={u.id}
+                      onClick={() => setUrgency(u.id)}
+                      className={`border-2 md:border-4 border-black py-2 text-center font-black text-[10px] md:text-xs uppercase cursor-pointer transition-all duration-300 ${urgency === u.id ? 'bg-[#FF90E8] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] translate-y-0 scale-100' : 'bg-white hover:bg-gray-200 shadow-none sm:translate-y-0.5'}`}
                     >
-                      {u}
+                      {u.label}
                     </div>
                   ))}
                 </div>
@@ -752,7 +754,6 @@ const OrderCalculator = () => {
                 <div className="space-y-2 mt-4">
                   <label className="font-black uppercase text-xs md:text-sm tracking-wider">Metode Pembayaran</label>
                   <div className="grid grid-cols-2 gap-3">
-                    {/* DIPERBAIKI: Value dan onClick menggunakan 'qris' murni, bukan gopay_qris */}
                     <label className={`cursor-pointer border-2 md:border-4 border-black p-3 transition-all flex items-center gap-3 ${gatewayMethod === 'qris' ? 'bg-[#A6FAFF] shadow-[3px_3px_0_0_rgba(0,0,0,1)]' : 'bg-white'}`}>
                       <input type="radio" value="qris" checked={gatewayMethod === 'qris'} onChange={() => setGatewayMethod('qris')} className="hidden" />
                       <QrCode className={gatewayMethod === 'qris' ? "text-black" : "text-gray-500"} />
@@ -764,10 +765,6 @@ const OrderCalculator = () => {
                       <span className="font-black text-xs md:text-sm uppercase">OVO</span>
                     </label>
                   </div>
-                  {/* Tambahan pesan kecil jika OVO tidak jalan */}
-                  {gatewayMethod === 'ovo' && (
-                    <p className="text-[10px] text-gray-500 italic mt-1 font-bold">*Pastikan Anda sudah mengaktifkan OVO di Dashboard Bayar.GG</p>
-                  )}
                 </div>
               )}
 
@@ -831,18 +828,9 @@ const OrderTracker = () => {
 
       <NeoCard color="bg-white" className="flex flex-col sm:flex-row gap-3 md:gap-4 items-end mb-8 transform -rotate-1 hover:rotate-0 transition-transform">
         <div className="flex-1 w-full">
-          <NeoInput
-            label="ID Pesanan (Contoh: ORD-1234)"
-            type="text"
-            value={trackId}
-            onChange={(e) => setTrackId(e.target.value)}
-            placeholder="Ketik ID Pesanan di sini..."
-            className="text-base"
-          />
+          <NeoInput label="ID Pesanan (Contoh: ORD-1234)" type="text" value={trackId} onChange={(e) => setTrackId(e.target.value)} placeholder="Ketik ID Pesanan di sini..." className="text-base" />
         </div>
-        <NeoButton onClick={handleTrack} color="bg-[#FF90E8]" className="w-full sm:w-auto !py-2.5 md:!py-3 text-sm md:text-base" icon={Activity}>
-          CARI
-        </NeoButton>
+        <NeoButton onClick={handleTrack} color="bg-[#FF90E8]" className="w-full sm:w-auto !py-2.5 md:!py-3 text-sm md:text-base" icon={Activity}>CARI</NeoButton>
       </NeoCard>
 
       {hasSearched && (
@@ -921,7 +909,6 @@ const ClientLanding = ({ navigate }) => {
       <CustomCursor />
       <AnimatedBackground />
 
-      {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-white border-b-4 border-black shadow-[0_4px_0_0_rgba(0,0,0,1)]">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 flex justify-between items-center">
           <div className="flex items-center gap-2 md:gap-3 cursor-pointer group select-none" onClick={handleLogoClick}>
@@ -938,7 +925,6 @@ const ClientLanding = ({ navigate }) => {
         </div>
       </nav>
 
-      {/* Hero Section */}
       <section ref={heroRef} className="pt-24 md:pt-32 pb-16 md:pb-24 px-4 md:px-8 max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-8 md:gap-12 relative">
         <div className="flex-1 space-y-5 md:space-y-6 z-10 mt-8 md:mt-0">
           <NeoBadge color="bg-[#A6FAFF]" className="text-xs md:text-sm px-2 py-1 md:px-3 md:py-1.5 rotate-2 inline-block">🚀 SERVER ONLINE: SIAP KERJA</NeoBadge>
@@ -970,14 +956,13 @@ const ClientLanding = ({ navigate }) => {
 
       <Marquee text="KERAHASIAAN TERJAMIN • REVISI SEPUASNYA • HARGA MAHASISWA • ANTI PLAGIASI • PENGERJAAN CEPAT" />
 
-      {/* Services Section */}
-      <section id="layanan" className="py-16 md:py-24 px-4 md:px-8 max-w-6xl mx-auto relative z-10">
+      <section id="layanan" className="py-16 md:py-24 px-4 md:px-8 max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-12 md:mb-16">
           <SplitTextReveal text="LAYANAN BRUTAL KAMI" className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase justify-center" />
           <div className="w-20 md:w-24 h-4 md:h-6 bg-[#FF90E8] border-2 md:border-4 border-black mx-auto mt-4 shadow-[3px_3px_0_0_rgba(0,0,0,1)] -rotate-3"></div>
         </div>
         
-        <ScrollStagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <ScrollStagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {SERVICES.map((service, index) => (
             <NeoCard key={index} color={service.color} className="flex flex-col h-full !p-5 md:!p-6">
               <div className="w-12 h-12 md:w-14 md:h-14 bg-white border-2 md:border-4 border-black flex items-center justify-center mb-5 md:mb-6 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transform -rotate-3 hover:rotate-3 transition-transform">
@@ -996,7 +981,6 @@ const ClientLanding = ({ navigate }) => {
       <OrderCalculator />
       <OrderTracker />
 
-      {/* Footer */}
       <footer className="bg-black text-white py-10 md:py-12 border-t-[8px] md:border-t-[12px] border-[#FFDF00] relative z-20">
         <div className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-center md:text-left">
@@ -1071,10 +1055,7 @@ const AdminDashboard = ({ onLogout }) => {
   };
 
   const Sidebar = () => (
-    <div className={`
-      fixed inset-y-0 left-0 z-[150] w-64 md:w-64 bg-white border-r-4 md:border-r-8 border-black transform transition-transform duration-300 ease-in-out flex flex-col
-      ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:relative
-    `}>
+    <div className={`fixed inset-y-0 left-0 z-[150] w-64 md:w-64 bg-white border-r-4 md:border-r-8 border-black transform transition-transform duration-300 ease-in-out flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:relative`}>
       <div className="p-5 md:p-6 border-b-4 md:border-b-8 border-black flex justify-between items-center bg-[#FFDF00]">
         <h1 className="font-black text-xl md:text-2xl uppercase tracking-tighter">Admin.</h1>
         <button className="md:hidden bg-white border-2 border-black p-1" onClick={() => setIsMobileMenuOpen(false)}><X className="w-5 h-5 font-black" /></button>
@@ -1085,14 +1066,7 @@ const AdminDashboard = ({ onLogout }) => {
           { id: 'orders', icon: ShoppingCart, label: 'Pesanan' },
           { id: 'settings', icon: Settings, label: 'Pengaturan' },
         ].map(item => (
-          <button
-            key={item.id}
-            onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }}
-            className={`
-              w-full flex items-center gap-3 px-4 py-3 font-black uppercase text-sm md:text-base transition-all border-2 md:border-4 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]
-              ${activeTab === item.id ? 'bg-[#FF90E8] translate-x-1 md:translate-x-2' : 'bg-white hover:bg-gray-100 hover:-translate-y-0.5'}
-            `}
-          >
+          <button key={item.id} onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 font-black uppercase text-sm md:text-base transition-all border-2 md:border-4 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] ${activeTab === item.id ? 'bg-[#FF90E8] translate-x-1 md:translate-x-2' : 'bg-white hover:bg-gray-100 hover:-translate-y-0.5'}`}>
             <item.icon className="w-4 h-4 md:w-5 md:h-5" /> {item.label}
           </button>
         ))}
@@ -1110,12 +1084,9 @@ const AdminDashboard = ({ onLogout }) => {
       <CustomCursor />
       <Sidebar />
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Topbar */}
         <header className="h-16 md:h-20 bg-white border-b-4 md:border-b-8 border-black flex items-center justify-between px-4 md:px-8 shrink-0 z-10 shadow-[0_4px_0_0_rgba(0,0,0,1)]">
           <div className="flex items-center gap-4">
-            <button className="md:hidden p-2 bg-[#FFDF00] border-2 md:border-4 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" onClick={() => setIsMobileMenuOpen(true)}>
-              <Menu className="w-5 h-5 md:w-6 md:h-6" />
-            </button>
+            <button className="md:hidden p-2 bg-[#FFDF00] border-2 md:border-4 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" onClick={() => setIsMobileMenuOpen(true)}><Menu className="w-5 h-5 md:w-6 md:h-6" /></button>
             <h2 className="text-lg md:text-xl font-black uppercase hidden md:block tracking-widest">{activeTab}</h2>
           </div>
           <div className="flex items-center gap-3">
@@ -1123,7 +1094,6 @@ const AdminDashboard = ({ onLogout }) => {
           </div>
         </header>
 
-        {/* Main Content Area */}
         <main className="flex-1 overflow-auto p-4 md:p-8 relative z-0">
           {activeTab === 'dashboard' && (
             <div className="space-y-6 md:space-y-8 animate-[slideIn_0.4s_ease-out] max-w-6xl">
@@ -1132,9 +1102,7 @@ const AdminDashboard = ({ onLogout }) => {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-black uppercase text-xs md:text-sm mb-1">Total Pendapatan</p>
-                      <p className="text-2xl md:text-3xl font-black drop-shadow-[1px_1px_0_#fff]">
-                        {formatRupiah(orders.filter(o => o.status === 'done').reduce((acc, curr) => acc + curr.amount, 0))}
-                      </p>
+                      <p className="text-2xl md:text-3xl font-black drop-shadow-[1px_1px_0_#fff]">{formatRupiah(orders.filter(o => o.status === 'done').reduce((acc, curr) => acc + curr.amount, 0))}</p>
                     </div>
                   </div>
                 </NeoCard>
@@ -1142,9 +1110,7 @@ const AdminDashboard = ({ onLogout }) => {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-black uppercase text-xs md:text-sm mb-1">Pesanan Aktif</p>
-                      <p className="text-2xl md:text-3xl font-black drop-shadow-[1px_1px_0_#fff]">
-                        {orders.filter(o => o.status !== 'done').length}
-                      </p>
+                      <p className="text-2xl md:text-3xl font-black drop-shadow-[1px_1px_0_#fff]">{orders.filter(o => o.status !== 'done').length}</p>
                     </div>
                   </div>
                 </NeoCard>
@@ -1152,9 +1118,7 @@ const AdminDashboard = ({ onLogout }) => {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-black uppercase text-xs md:text-sm mb-1">Selesai Total</p>
-                      <p className="text-2xl md:text-3xl font-black drop-shadow-[1px_1px_0_#fff]">
-                        {orders.filter(o => o.status === 'done').length}
-                      </p>
+                      <p className="text-2xl md:text-3xl font-black drop-shadow-[1px_1px_0_#fff]">{orders.filter(o => o.status === 'done').length}</p>
                     </div>
                   </div>
                 </NeoCard>
@@ -1163,9 +1127,7 @@ const AdminDashboard = ({ onLogout }) => {
               <div className="border-4 md:border-8 border-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
                 <div className="p-4 md:p-6 border-b-4 md:border-b-8 border-black bg-[#FF90E8] flex justify-between items-center">
                   <h3 className="text-xl md:text-2xl font-black uppercase">Pesanan Terbaru</h3>
-                  <NeoButton onClick={() => setActiveTab('orders')} className="!py-1 md:!py-2 !px-3 md:!px-4 text-[10px] md:text-sm" color="bg-white">
-                    Lihat Semua
-                  </NeoButton>
+                  <NeoButton onClick={() => setActiveTab('orders')} className="!py-1 md:!py-2 !px-3 md:!px-4 text-[10px] md:text-sm" color="bg-white">Lihat Semua</NeoButton>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse min-w-[700px]">
@@ -1186,9 +1148,7 @@ const AdminDashboard = ({ onLogout }) => {
                           <td className="p-3 md:p-4 border-r-2 md:border-r-4 border-black">{getStatusBadge(order.status)}</td>
                         </tr>
                       ))}
-                      {orders.length === 0 && (
-                        <tr><td colSpan="4" className="p-6 text-center text-gray-500 font-bold uppercase">Kosong melompong</td></tr>
-                      )}
+                      {orders.length === 0 && (<tr><td colSpan="4" className="p-6 text-center text-gray-500 font-bold uppercase">Kosong melompong</td></tr>)}
                     </tbody>
                   </table>
                 </div>
@@ -1200,13 +1160,7 @@ const AdminDashboard = ({ onLogout }) => {
             <div className="space-y-6 md:space-y-8 animate-[slideIn_0.4s_ease-out] max-w-6xl">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h2 className="text-2xl md:text-3xl font-black uppercase">Manajemen Pesanan</h2>
-                <input 
-                  type="text" 
-                  placeholder="Cari ID, Nama, Layanan..." 
-                  className="w-full sm:w-72 border-2 md:border-4 border-black p-2 md:p-3 font-bold text-sm md:text-base focus:outline-none focus:bg-[#A6FAFF] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                />
+                <input type="text" placeholder="Cari ID, Nama, Layanan..." className="w-full sm:w-72 border-2 md:border-4 border-black p-2 md:p-3 font-bold text-sm md:text-base focus:outline-none focus:bg-[#A6FAFF] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] md:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
               </div>
 
               <div className="border-4 md:border-8 border-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
@@ -1223,62 +1177,25 @@ const AdminDashboard = ({ onLogout }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {orders.filter(o => 
-                        o.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                        o.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        o.service.toLowerCase().includes(searchQuery.toLowerCase())
-                      ).map((order, i) => (
+                      {orders.filter(o => o.id.toLowerCase().includes(searchQuery.toLowerCase()) || o.client.toLowerCase().includes(searchQuery.toLowerCase()) || o.service.toLowerCase().includes(searchQuery.toLowerCase())).map((order, i) => (
                         <tr key={order.id} className={`font-bold text-xs md:text-sm border-b-2 md:border-b-4 border-black transition-colors ${i % 2 === 0 ? 'bg-white hover:bg-gray-100' : 'bg-[#f4f4f0] hover:bg-gray-200'}`}>
-                          <td className="p-3 md:p-4 border-r-2 md:border-r-4 border-black">
-                            <span className="font-black text-[#3b82f6]">{order.id}</span><br/>
-                            <span className="text-gray-500 text-[10px] md:text-xs">{order.date}</span>
-                          </td>
-                          <td className="p-3 md:p-4 border-r-2 md:border-r-4 border-black">
-                            {order.client}<br/>
-                            <a href={formatWaLink(order.wa)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 text-[10px] md:text-xs flex items-center mt-1">
-                              WA: {order.wa}
-                            </a>
-                          </td>
-                          <td className="p-3 md:p-4 border-r-2 md:border-r-4 border-black">
-                            {order.service}<br/>
-                            {order.notes && <span className="text-gray-500 italic text-[10px] md:text-xs block mt-1">"{order.notes}"</span>}
-                          </td>
+                          <td className="p-3 md:p-4 border-r-2 md:border-r-4 border-black"><span className="font-black text-[#3b82f6]">{order.id}</span><br/><span className="text-gray-500 text-[10px] md:text-xs">{order.date}</span></td>
+                          <td className="p-3 md:p-4 border-r-2 md:border-r-4 border-black">{order.client}<br/><a href={formatWaLink(order.wa)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 text-[10px] md:text-xs flex items-center mt-1">WA: {order.wa}</a></td>
+                          <td className="p-3 md:p-4 border-r-2 md:border-r-4 border-black">{order.service}<br/>{order.notes && <span className="text-gray-500 italic text-[10px] md:text-xs block mt-1">"{order.notes}"</span>}</td>
                           <td className="p-3 md:p-4 border-r-2 md:border-r-4 border-black">{formatRupiah(order.amount)}</td>
                           <td className="p-3 md:p-4 border-r-2 md:border-r-4 border-black">{getStatusBadge(order.status)}</td>
                           <td className="p-3 md:p-4">
                             <div className="flex items-center justify-center gap-2">
-                              <select 
-                                className="border-2 border-black bg-[#A6FAFF] p-1 md:p-1.5 text-[10px] md:text-xs font-black focus:outline-none focus:bg-[#FFDF00] cursor-pointer"
-                                value={order.status}
-                                onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                              >
-                                <option value="pending">PENDING</option>
-                                <option value="process">PROSES</option>
-                                <option value="done">SELESAI</option>
+                              <select className="border-2 border-black bg-[#A6FAFF] p-1 md:p-1.5 text-[10px] md:text-xs font-black focus:outline-none focus:bg-[#FFDF00] cursor-pointer" value={order.status} onChange={(e) => handleStatusChange(order.id, e.target.value)}>
+                                <option value="pending">PENDING</option><option value="process">PROSES</option><option value="done">SELESAI</option>
                               </select>
-                              <button 
-                                onClick={() => handleContactCustomer(order)}
-                                className="bg-[#90EE90] text-black p-1.5 md:p-2 border-2 border-black hover:bg-green-400 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none"
-                                title="Hubungi via WA"
-                              >
-                                <Send className="w-4 h-4 md:w-5 md:h-5" />
-                              </button>
-                              <button 
-                                onClick={() => handleDeleteOrder(order.id)}
-                                className="bg-red-500 text-white p-1.5 md:p-2 border-2 border-black hover:bg-red-600 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none"
-                                title="Hapus Pesanan"
-                              >
-                                <X className="w-4 h-4 md:w-5 md:h-5" />
-                              </button>
+                              <button onClick={() => handleContactCustomer(order)} className="bg-[#90EE90] text-black p-1.5 md:p-2 border-2 border-black hover:bg-green-400 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none" title="Hubungi via WA"><Send className="w-4 h-4 md:w-5 md:h-5" /></button>
+                              <button onClick={() => handleDeleteOrder(order.id)} className="bg-red-500 text-white p-1.5 md:p-2 border-2 border-black hover:bg-red-600 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none" title="Hapus Pesanan"><X className="w-4 h-4 md:w-5 md:h-5" /></button>
                             </div>
                           </td>
                         </tr>
                       ))}
-                      {orders.length === 0 && (
-                        <tr>
-                          <td colSpan="6" className="p-8 text-center text-gray-500 font-black uppercase text-lg">Belum ada pesanan / Tidak ditemukan</td>
-                        </tr>
-                      )}
+                      {orders.length === 0 && (<tr><td colSpan="6" className="p-8 text-center text-gray-500 font-black uppercase text-lg">Belum ada pesanan / Tidak ditemukan</td></tr>)}
                     </tbody>
                   </table>
                 </div>
@@ -1289,30 +1206,17 @@ const AdminDashboard = ({ onLogout }) => {
           {activeTab === 'settings' && (
             <div className="space-y-6 md:space-y-8 animate-[slideIn_0.4s_ease-out] max-w-3xl">
               <h2 className="text-2xl md:text-3xl font-black uppercase mb-6">Pengaturan Sistem</h2>
-              
               <NeoCard color="bg-white">
                 <div className="space-y-6">
-                  <div className="bg-[#FFDF00] p-4 border-2 md:border-4 border-black -mx-4 -mt-4 md:-mx-6 md:-mt-6 mb-6 font-black uppercase text-base md:text-lg border-b-2 md:border-b-4">
-                    Konfigurasi Utama
-                  </div>
-                  
-                  <NeoInput 
-                    label="Nomor WhatsApp Admin (Utama)" 
-                    type="text" 
-                    value={adminSettings.waNumber} 
-                    onChange={(e) => setAdminSettings({...adminSettings, waNumber: e.target.value})}
-                    placeholder="Contoh: 628123456789"
-                  />
+                  <div className="bg-[#FFDF00] p-4 border-2 md:border-4 border-black -mx-4 -mt-4 md:-mx-6 md:-mt-6 mb-6 font-black uppercase text-base md:text-lg border-b-2 md:border-b-4">Konfigurasi Utama</div>
+                  <NeoInput label="Nomor WhatsApp Admin (Utama)" type="text" value={adminSettings.waNumber} onChange={(e) => setAdminSettings({...adminSettings, waNumber: e.target.value})} placeholder="Contoh: 628123456789" />
                   
                   <div className="flex items-center justify-between p-4 border-2 md:border-4 border-black bg-[#f4f4f0]">
                     <div>
                       <h4 className="font-black uppercase text-sm md:text-base">Terima Pesanan Baru</h4>
                       <p className="text-xs md:text-sm font-bold text-gray-600 mt-1">Matikan saklar ini jika Admin sedang libur atau slot penuh.</p>
                     </div>
-                    <button 
-                      onClick={() => setAdminSettings({...adminSettings, acceptingOrders: !adminSettings.acceptingOrders})}
-                      className={`w-14 md:w-16 h-7 md:h-8 border-2 md:border-4 border-black rounded-full relative transition-colors shrink-0 ${adminSettings.acceptingOrders ? 'bg-[#90EE90]' : 'bg-red-400'}`}
-                    >
+                    <button onClick={() => setAdminSettings({...adminSettings, acceptingOrders: !adminSettings.acceptingOrders})} className={`w-14 md:w-16 h-7 md:h-8 border-2 md:border-4 border-black rounded-full relative transition-colors shrink-0 ${adminSettings.acceptingOrders ? 'bg-[#90EE90]' : 'bg-red-400'}`}>
                       <div className={`w-5 md:w-6 h-5 md:h-6 border-2 md:border-4 border-black bg-white rounded-full absolute top-[2px] transition-transform ${adminSettings.acceptingOrders ? 'translate-x-[26px] md:translate-x-[30px]' : 'translate-x-[2px]'}`}></div>
                     </button>
                   </div>
@@ -1322,19 +1226,13 @@ const AdminDashboard = ({ onLogout }) => {
                       <h4 className="font-black uppercase text-sm md:text-base">Metode Pembayaran (Checkout)</h4>
                       <p className="text-xs md:text-sm font-bold text-gray-600 mt-1">Ubah ke WhatsApp jika Bayar.GG sedang gangguan.</p>
                     </div>
-                    <select 
-                      value={adminSettings.paymentMethod}
-                      onChange={(e) => setAdminSettings({...adminSettings, paymentMethod: e.target.value})}
-                      className="border-2 md:border-4 border-black bg-white p-2 text-xs md:text-sm font-black focus:outline-none focus:bg-[#A6FAFF] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] w-full sm:w-auto"
-                    >
+                    <select value={adminSettings.paymentMethod} onChange={(e) => setAdminSettings({...adminSettings, paymentMethod: e.target.value})} className="border-2 md:border-4 border-black bg-white p-2 text-xs md:text-sm font-black focus:outline-none focus:bg-[#A6FAFF] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] w-full sm:w-auto">
                       <option value="gateway">Via Gateway (Bayar.GG)</option>
                       <option value="whatsapp">Direct Invoice (WhatsApp)</option>
                     </select>
                   </div>
 
-                  <NeoButton onClick={handleSaveSettings} color="bg-[#A6FAFF]" icon={Check} className="w-full mt-4 !py-3 md:!py-4">
-                    SIMPAN PENGATURAN
-                  </NeoButton>
+                  <NeoButton onClick={handleSaveSettings} color="bg-[#A6FAFF]" icon={Check} className="w-full mt-4 !py-3 md:!py-4">SIMPAN PENGATURAN</NeoButton>
                 </div>
               </NeoCard>
             </div>
@@ -1355,48 +1253,28 @@ const AdminLogin = ({ onLogin, onBack }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (pwd === 'admin123') {
-      toast('Akses Diberikan. Selamat Datang!', 'success');
-      onLogin();
-    } else {
-      toast('Akses Ditolak! Sandi Salah.', 'error');
-    }
+    if (pwd === 'admin123') { toast('Akses Diberikan. Selamat Datang!', 'success'); onLogin(); } 
+    else { toast('Akses Ditolak! Sandi Salah.', 'error'); }
   };
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden font-sans selection:bg-[#FFDF00] selection:text-black">
       <CustomCursor />
-      
       <div className="absolute inset-0 bg-[#FF90E8] opacity-20" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 10%, 0 20%)', animation: 'scanline 4s linear infinite' }}></div>
       <div className="absolute inset-0 bg-[#A6FAFF] opacity-20" style={{ clipPath: 'polygon(0 80%, 100% 90%, 100% 100%, 0 100%)', animation: 'scanline 3s linear infinite reverse' }}></div>
-
       <div className="relative w-full max-w-sm md:max-w-md z-10 group perspective-1000">
         <div className="absolute inset-0 bg-[#FFDF00] border-4 md:border-8 border-black translate-x-4 translate-y-4 shadow-[8px_8px_0px_0px_#A6FAFF] transition-transform duration-300"></div>
         <form onSubmit={handleSubmit} className="relative z-10 bg-white border-4 md:border-8 border-black p-6 md:p-10 space-y-6 transform transition-transform duration-300">
           <div className="text-center mb-6 md:mb-8">
-            <div className="w-16 h-16 md:w-20 md:h-20 bg-black border-2 md:border-4 border-black rounded-full flex items-center justify-center mx-auto mb-4 shadow-[6px_6px_0px_0px_#FF90E8]">
-              <ShieldCheck className="w-8 h-8 md:w-10 md:h-10 text-white" />
-            </div>
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-black border-2 md:border-4 border-black rounded-full flex items-center justify-center mx-auto mb-4 shadow-[6px_6px_0px_0px_#FF90E8]"><ShieldCheck className="w-8 h-8 md:w-10 md:h-10 text-white" /></div>
             <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter">Login Admin</h2>
           </div>
-          <NeoInput 
-            label="KATA SANDI RAHASIA" 
-            type="password" 
-            placeholder="••••••••" 
-            value={pwd}
-            onChange={(e) => setPwd(e.target.value)}
-            className="text-base md:text-lg"
-          />
+          <NeoInput label="KATA SANDI RAHASIA" type="password" placeholder="••••••••" value={pwd} onChange={(e) => setPwd(e.target.value)} className="text-base md:text-lg" />
           <NeoButton className="w-full text-base md:text-lg py-3 md:py-4" type="submit" color="bg-[#A6FAFF]">MASUK SISTEM</NeoButton>
-          <button type="button" onClick={onBack} className="w-full text-center font-bold text-sm md:text-base hover:underline mt-4 hover:text-[#3b82f6]">
-            ← Kembali ke Jalan Benar
-          </button>
+          <button type="button" onClick={onBack} className="w-full text-center font-bold text-sm md:text-base hover:underline mt-4 hover:text-[#3b82f6]">← Kembali ke Jalan Benar</button>
         </form>
       </div>
-
-      <style>{`
-        @keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(1000%); } }
-      `}</style>
+      <style>{`@keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(1000%); } }`}</style>
     </div>
   );
 };
@@ -1408,7 +1286,6 @@ export default function App() {
   return (
     <ToastProvider>
       {booting && <BootSequence onComplete={() => setBooting(false)} />}
-      
       {!booting && (
         <>
           {view === 'landing' && <ClientLanding navigate={setView} />}
@@ -1416,7 +1293,6 @@ export default function App() {
           {view === 'admin' && <AdminDashboard onLogout={() => setView('landing')} />}
         </>
       )}
-      
       <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700;900&display=swap');
         body { font-family: 'Space Grotesk', sans-serif; -webkit-font-smoothing: antialiased; cursor: none; }
@@ -1426,6 +1302,5 @@ export default function App() {
     </ToastProvider>
   );
 }
-
 
 
